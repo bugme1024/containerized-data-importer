@@ -26,7 +26,7 @@ import (
 	ocpconfigv1 "github.com/openshift/api/config/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -408,19 +408,19 @@ var _ = Describe("Controller create CDI config", func() {
 var _ = Describe("getUrlFromIngress", func() {
 	//TODO: Once we get newer version of client-go, we need to switch to networking ingress.
 	It("Should return the url if backend service matches", func() {
-		ingress := &networkingv1.Ingress{
+		ingress := &extensionsv1beta1.Ingress{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "networking/v1",
+				APIVersion: "extensions/v1beta1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test",
 				Namespace: "test",
 			},
-			Spec: networkingv1.IngressSpec{
-				DefaultBackend: &networkingv1.IngressBackend{
-					Service: &networkingv1.IngressServiceBackend{Name: testServiceName},
+			Spec: extensionsv1beta1.IngressSpec{
+				Backend: &extensionsv1beta1.IngressBackend{
+					ServiceName: testServiceName,
 				},
-				Rules: []networkingv1.IngressRule{
+				Rules: []extensionsv1beta1.IngressRule{
 					{Host: testURL},
 				},
 			},
@@ -430,19 +430,19 @@ var _ = Describe("getUrlFromIngress", func() {
 	})
 
 	It("Should return blank if backend service does not match", func() {
-		ingress := &networkingv1.Ingress{
+		ingress := &extensionsv1beta1.Ingress{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "networking/v1",
+				APIVersion: "extensions/v1beta1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test",
 				Namespace: "test",
 			},
-			Spec: networkingv1.IngressSpec{
-				DefaultBackend: &networkingv1.IngressBackend{
-					Service: &networkingv1.IngressServiceBackend{Name: testServiceName},
+			Spec: extensionsv1beta1.IngressSpec{
+				Backend: &extensionsv1beta1.IngressBackend{
+					ServiceName: testServiceName,
 				},
-				Rules: []networkingv1.IngressRule{
+				Rules: []extensionsv1beta1.IngressRule{
 					{Host: testURL},
 				},
 			},
@@ -452,23 +452,23 @@ var _ = Describe("getUrlFromIngress", func() {
 	})
 
 	It("Should return the url if first rule backend service matches", func() {
-		ingress := &networkingv1.Ingress{
+		ingress := &extensionsv1beta1.Ingress{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "networking/v1",
+				APIVersion: "extensions/v1beta1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test",
 				Namespace: "test",
 			},
-			Spec: networkingv1.IngressSpec{
-				Rules: []networkingv1.IngressRule{
+			Spec: extensionsv1beta1.IngressSpec{
+				Rules: []extensionsv1beta1.IngressRule{
 					{
-						IngressRuleValue: networkingv1.IngressRuleValue{
-							HTTP: &networkingv1.HTTPIngressRuleValue{
-								Paths: []networkingv1.HTTPIngressPath{
+						IngressRuleValue: extensionsv1beta1.IngressRuleValue{
+							HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
+								Paths: []extensionsv1beta1.HTTPIngressPath{
 									{
-										Backend: networkingv1.IngressBackend{
-											Service: &networkingv1.IngressServiceBackend{Name: testServiceName},
+										Backend: extensionsv1beta1.IngressBackend{
+											ServiceName: testServiceName,
 										},
 									},
 								},
@@ -484,38 +484,38 @@ var _ = Describe("getUrlFromIngress", func() {
 	})
 
 	It("Should return the url if any rule backend servicename matches", func() {
-		ingress := &networkingv1.Ingress{
+		ingress := &extensionsv1beta1.Ingress{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "networking/v1",
+				APIVersion: "extensions/v1beta1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test",
 				Namespace: "test",
 			},
-			Spec: networkingv1.IngressSpec{
-				Rules: []networkingv1.IngressRule{
+			Spec: extensionsv1beta1.IngressSpec{
+				Rules: []extensionsv1beta1.IngressRule{
 					{
-						IngressRuleValue: networkingv1.IngressRuleValue{
-							HTTP: &networkingv1.HTTPIngressRuleValue{
-								Paths: []networkingv1.HTTPIngressPath{
+						IngressRuleValue: extensionsv1beta1.IngressRuleValue{
+							HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
+								Paths: []extensionsv1beta1.HTTPIngressPath{
 									{
-										Backend: networkingv1.IngressBackend{
-											Service: &networkingv1.IngressServiceBackend{Name: "service1"},
+										Backend: extensionsv1beta1.IngressBackend{
+											ServiceName: "service1",
 										},
 									},
 									{
-										Backend: networkingv1.IngressBackend{
-											Service: &networkingv1.IngressServiceBackend{Name: "service2"},
+										Backend: extensionsv1beta1.IngressBackend{
+											ServiceName: "service2",
 										},
 									},
 									{
-										Backend: networkingv1.IngressBackend{
-											Service: &networkingv1.IngressServiceBackend{Name: testServiceName},
+										Backend: extensionsv1beta1.IngressBackend{
+											ServiceName: testServiceName,
 										},
 									},
 									{
-										Backend: networkingv1.IngressBackend{
-											Service: &networkingv1.IngressServiceBackend{Name: "service4"},
+										Backend: extensionsv1beta1.IngressBackend{
+											ServiceName: "service4",
 										},
 									},
 								},
@@ -531,18 +531,18 @@ var _ = Describe("getUrlFromIngress", func() {
 	})
 
 	It("Should return blank if no http rule exists", func() {
-		ingress := &networkingv1.Ingress{
+		ingress := &extensionsv1beta1.Ingress{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "networking/v1",
+				APIVersion: "extensions/v1beta1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test",
 				Namespace: "test",
 			},
-			Spec: networkingv1.IngressSpec{
-				Rules: []networkingv1.IngressRule{
+			Spec: extensionsv1beta1.IngressSpec{
+				Rules: []extensionsv1beta1.IngressRule{
 					{
-						IngressRuleValue: networkingv1.IngressRuleValue{},
+						IngressRuleValue: extensionsv1beta1.IngressRuleValue{},
 					},
 				},
 			},
@@ -740,7 +740,7 @@ func createConfigReconciler(objects ...runtime.Object) (*CDIConfigReconciler, *c
 	// Register operator types with the runtime scheme.
 	s := scheme.Scheme
 	cdiv1.AddToScheme(s)
-	networkingv1.AddToScheme(s)
+	extensionsv1beta1.AddToScheme(s)
 	routev1.AddToScheme(s)
 	storagev1.AddToScheme(s)
 	ocpconfigv1.AddToScheme(s)
@@ -811,28 +811,28 @@ func createRoute(name, ns, service string) *routev1.Route {
 	}
 }
 
-func createIngressList(ingresses ...networkingv1.Ingress) *networkingv1.IngressList {
-	list := &networkingv1.IngressList{
-		Items: []networkingv1.Ingress{},
+func createIngressList(ingresses ...extensionsv1beta1.Ingress) *extensionsv1beta1.IngressList {
+	list := &extensionsv1beta1.IngressList{
+		Items: []extensionsv1beta1.Ingress{},
 	}
 	list.Items = append(list.Items, ingresses...)
 	return list
 }
 
-func createIngress(name, ns, service, url string) *networkingv1.Ingress {
-	return &networkingv1.Ingress{
+func createIngress(name, ns, service, url string) *extensionsv1beta1.Ingress {
+	return &extensionsv1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "networking/v1",
+			APIVersion: "extensions/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
 		},
-		Spec: networkingv1.IngressSpec{
-			DefaultBackend: &networkingv1.IngressBackend{
-				Service: &networkingv1.IngressServiceBackend{Name: service},
+		Spec: extensionsv1beta1.IngressSpec{
+			Backend: &extensionsv1beta1.IngressBackend{
+				ServiceName: service,
 			},
-			Rules: []networkingv1.IngressRule{
+			Rules: []extensionsv1beta1.IngressRule{
 				{Host: url},
 			},
 		},

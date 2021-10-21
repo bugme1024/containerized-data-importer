@@ -18,7 +18,7 @@ Create Ingress for the upload proxy:
 
 ```bash
 cat <<EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: cdi-uploadproxy-ingress
@@ -35,10 +35,8 @@ spec:
     http:
       paths:
       - backend:
-          service:
-            name: cdi-uploadproxy
-            port:
-              number: 443
+          serviceName: cdi-uploadproxy
+          servicePort: 443
   tls:
   - hosts:
     # change to a valid FQDN in your organization
