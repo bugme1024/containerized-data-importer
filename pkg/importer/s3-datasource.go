@@ -129,14 +129,13 @@ func (sd *S3DataSource) Close() error {
 func createS3Reader(ep *url.URL, accessKey, secKey string, certDir string) (io.ReadCloser, error) {
 	klog.V(3).Infoln("Using S3 client to get data")
 
-	endpoint := ep.Host
-	klog.Infof("Endpoint %s", endpoint)
+	klog.Infof("Endpoint %s", ep.Host)
 	path := strings.Trim(ep.Path, "/")
 	bucket, object := extractBucketAndObject(path)
 
 	klog.V(1).Infof("bucket %s", bucket)
 	klog.V(1).Infof("object %s", object)
-	svc, err := newClientFunc(endpoint, accessKey, secKey, certDir)
+	svc, err := newClientFunc(ep, accessKey, secKey)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not build s3 client for %q", ep.Host)
 	}
@@ -153,35 +152,21 @@ func createS3Reader(ep *url.URL, accessKey, secKey string, certDir string) (io.R
 	return objectReader, nil
 }
 
-func getS3Client(endpoint, accessKey, secKey string, certDir string) (S3Client, error) {
-	// Adding certs using CustomCABundle will overwrite the SystemCerts, so we opt by creating a custom HTTPClient
-	httpClient, err := createHTTPClient(certDir)
-
-	if err != nil {
-		return nil, errors.Wrap(err, "Error creating http client for s3")
-	}
-
+func getS3Client(ep *url.URL, accessKey, secKey string) (S3Client, error) {
 	creds := credentials.NewStaticCredentials(accessKey, secKey, "")
-	region := extractRegion(endpoint)
-	disableSSL := false
-	s3Url, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	// Disable SSL for http endpoint. This should cause the s3 client to create http requests.
-	if s3Url.Scheme == httpScheme {
-		disableSSL = true
-	}
-
-	sess, err := session.NewSession(&aws.Config{
+	region := extractRegion(ep.Host)
+	conf := aws.Config{
 		Region:           aws.String(region),
-		Endpoint:         aws.String(endpoint),
+		Endpoint:         aws.String(ep.Host),
 		Credentials:      creds,
 		S3ForcePathStyle: aws.Bool(true),
-		HTTPClient:       httpClient,
-		DisableSSL:       &disableSSL,
-	},
-	)
+	}
+
+	if ep.Scheme == "http" {
+		conf.DisableSSL = aws.Bool(true)
+	}
+
+	sess, err := session.NewSession(&conf)
 	if err != nil {
 		return nil, err
 	}
